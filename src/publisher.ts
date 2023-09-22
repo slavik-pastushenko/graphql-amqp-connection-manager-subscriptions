@@ -30,15 +30,13 @@ export class Publisher {
   }
 
   private async getOrCreateChannel(exchange: Exchange): Promise<ChannelWrapper> {
-    if (!this.channel) {
-      this.channel = await this.connection.createChannel({
-        setup: async (channel: Channel) => {
-          await channel.assertExchange(exchange.name, exchange.type, exchange.options);
-        },
-      });
+    this.channel = await this.connection.createChannel({
+      setup: async (channel: Channel) => {
+        await channel.assertExchange(exchange.name, exchange.type, exchange.options);
+      },
+    });
 
-      this.channel.on('error', err => this.logger('Publisher channel error: "%j"', err));
-    }
+    this.channel.on('error', err => this.logger('Publisher channel error: "%j"', err));
 
     return this.channel;
   }

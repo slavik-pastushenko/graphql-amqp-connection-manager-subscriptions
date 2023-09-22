@@ -65,19 +65,17 @@ export class Subscriber {
   }
 
   private async getOrCreateChannel(exchange: Exchange, queue: Queue, routingKey: string, args: any): Promise<ChannelWrapper> {
-    if (!this.channel) {
-      this.channel = await this.connection.createChannel({
-        setup: async (channel: Channel) => {
-          await channel.assertExchange(exchange.name, exchange.type, exchange.options);
+    this.channel = await this.connection.createChannel({
+      setup: async (channel: Channel) => {
+        await channel.assertExchange(exchange.name, exchange.type, exchange.options);
 
-          const assertedQueue = await channel.assertQueue(queue?.name || '', queue?.options);
+        const assertedQueue = await channel.assertQueue(queue?.name || '', queue?.options);
 
-          await channel.bindQueue(assertedQueue.queue, exchange.name, routingKey, args);
-        },
-      });
+        await channel.bindQueue(assertedQueue.queue, exchange.name, routingKey, args);
+      },
+    });
 
-      this.channel.on('error', err => this.logger('Subscriber channel error: "%j"', err));
-    }
+    this.channel.on('error', err => this.logger('Subscriber channel error: "%j"', err));
 
     return this.channel;
   }
