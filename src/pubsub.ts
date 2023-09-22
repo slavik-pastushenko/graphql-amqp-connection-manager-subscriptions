@@ -3,10 +3,10 @@ import amqp from 'amqplib';
 import Debug from 'debug';
 import { v4 as uuidv4 } from 'uuid';
 
-import { Publisher } from './src/publisher';
-import { Subscriber } from './src/subscriber';
-import { Exchange, PubSubAMQPConnectionManagerConfig } from './src/common';
-import { PubSubAsyncIterator } from './src/pubsub-async-iterator';
+import { Publisher } from './publisher';
+import { Subscriber } from './subscriber';
+import { Exchange, PubSubAMQPConnectionManagerConfig } from './common';
+import { PubSubAsyncIterator } from './pubsub-async-iterator';
 
 const logger = Debug('AMQPConnectionManagerPubSub');
 

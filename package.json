@@ -1,7 +1,7 @@
 {
   "name": "graphql-amqp-connection-manager-subscriptions",
   "description": "GraphQL AMQP Connection Manager Subscriptions",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": "https://github.com/slavik-pastushenko/graphql-amqp-connection-manager-subscriptions/graphs/contributors",
   "license": "MIT",
   "homepage": "https://github.com/slavik-pastushenko/graphql-amqp-connection-manager-subscriptions",
