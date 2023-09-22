@@ -4,6 +4,7 @@ import { ConsumeMessage } from 'amqplib';
 export class Common {
   public static convertMessage(msg: ConsumeMessage | null): any {
     let res: any = null;
+
     if (msg) {
       try {
         res = JSON.parse(msg.content.toString());
@@ -11,6 +12,7 @@ export class Common {
         res = msg.content.toString();
       }
     }
+
     return res;
   }
 }

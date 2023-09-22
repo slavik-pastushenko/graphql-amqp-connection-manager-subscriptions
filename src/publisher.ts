@@ -22,7 +22,9 @@ export class Publisher {
   public async publish(routingKey: string, data: any, options?: Options.Publish): Promise<void> {
     const channel = await this.getOrCreateChannel(this.exchange);
 
-    channel.publish(this.exchange.name, routingKey, Buffer.from(JSON.stringify(data)), options);
+    this.logger('Publishing message to exchange "%s" with routing key "%s" (%j)', this.exchange.name, routingKey, data);
+
+    await channel.publish(this.exchange.name, routingKey, Buffer.from(JSON.stringify(data)), options);
 
     this.logger('Message sent to exchange "%s" with routing key "%s" (%j)', this.exchange.name, routingKey, data);
   }

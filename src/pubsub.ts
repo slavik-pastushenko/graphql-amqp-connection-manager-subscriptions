@@ -1,11 +1,12 @@
 import { PubSubEngine } from 'graphql-subscriptions';
-import amqp from 'amqplib';
+import { Options } from 'amqp-connection-manager';
+import { ConsumeMessage } from 'amqplib';
 import Debug from 'debug';
 import { v4 as uuidv4 } from 'uuid';
 
 import { Publisher } from './publisher';
 import { Subscriber } from './subscriber';
-import { Exchange, PubSubAMQPConnectionManagerConfig } from './common';
+import { PubSubAMQPConnectionManagerConfig } from './common';
 import { PubSubAsyncIterator } from './pubsub-async-iterator';
 
 const logger = Debug('AMQPConnectionManagerPubSub');
@@ -14,8 +15,6 @@ export class AMQPConnectionManagerPubSub implements PubSubEngine {
   private readonly publisher: Publisher;
 
   private readonly subscriber: Subscriber;
-
-  private readonly exchange: Exchange;
 
   private subscriptionMap: { [subId: number]: { routingKey: string; listener: Function } };
   private subsRefsMap: { [trigger: string]: Array<number> };
@@ -32,22 +31,18 @@ export class AMQPConnectionManagerPubSub implements PubSubEngine {
     this.publisher = new Publisher(config, logger);
     this.subscriber = new Subscriber(config, logger);
 
-    this.exchange = { name: 'graphql_subscriptions', type: 'topic', options: { durable: false, autoDelete: false }, ...config.exchange };
-
     logger('Finished initializing');
   }
 
-  public async publish(routingKey: string, payload: any, options?: amqp.Options.Publish): Promise<void> {
-    logger('Publishing message to exchange "%s" for key "%s" (%j)', this.exchange.name, routingKey, payload);
-
+  public async publish(routingKey: string, payload: any, options?: Options.Publish): Promise<void> {
     return this.publisher.publish(routingKey, payload, options);
   }
 
   public async subscribe(
     routingKey: string | 'fanout',
-    onMessage: (content: any, message?: amqp.ConsumeMessage | null) => void,
+    onMessage: (content: any, message?: ConsumeMessage | null) => void,
     args?: any,
-    options?: amqp.Options.Consume,
+    options?: Options.Consume,
   ): Promise<number> {
     const id = this.currentSubscriptionId++;
 
@@ -116,7 +111,7 @@ export class AMQPConnectionManagerPubSub implements PubSubEngine {
     return new PubSubAsyncIterator<T>(this, triggers);
   }
 
-  private onMessage = (routingKey: string, content: any, message: amqp.ConsumeMessage | null): void => {
+  private onMessage = (routingKey: string, content: any, message: ConsumeMessage | null): void => {
     const subscribers = this.subsRefsMap[routingKey];
 
     // Don't work for nothing...
