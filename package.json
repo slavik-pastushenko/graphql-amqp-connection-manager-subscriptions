@@ -1,0 +1,55 @@
+{
+  "name": "graphql-amqp-connection-manager-subscriptions",
+  "description": "GraphQL AMQP Connection Manager Subscriptions",
+  "version": "1.0.0",
+  "author": "https://github.com/slavik-pastushenko/graphql-amqp-connection-manager-subscriptions/graphs/contributors",
+  "license": "MIT",
+  "homepage": "https://github.com/slavik-pastushenko/graphql-amqp-connection-manager-subscriptions",
+  "bugs": {
+    "url": "https://github.com/slavik-pastushenko/graphql-amqp-connection-manager-subscriptions/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/slavik-pastushenko/graphql-amqp-connection-manager-subscriptions.git"
+  },
+  "engines": {
+    "node": ">= 18"
+  },
+  "keywords": [
+    "api",
+    "amqplib",
+    "amqp-connection-manager",
+    "graphql",
+    "subscription",
+    "rabbitmq",
+    "rabbit"
+  ],
+  "main": "lib/index.js",
+  "scripts": {
+    "start": "nodemon --ext js,ts,tsx,json --exec ts-node -- src/index.ts --extensions \".ts,.tsx\" --source-maps inline",
+    "build": "tsc",
+    "lint": "eslint \"src/**/*.ts\""
+  },
+  "dependencies": {
+    "debug": "4.3.4",
+    "graphql-subscriptions": "2.0.0",
+    "uuid": "9.0.1"
+  },
+  "devDependencies": {
+    "@types/amqplib": "0.10.1",
+    "@types/debug": "4.1.8",
+    "@types/uuid": "9.0.4",
+    "amqp-connection-manager": "4.1.14",
+    "amqplib": "0.10.3",
+    "eslint": "8.49.0",
+    "graphql": "16.8.1",
+    "nodemon": "3.0.1",
+    "prettier": "3.0.3",
+    "ts-node": "10.9.1",
+    "typescript": "5.2.2"
+  },
+  "peerDependencies": {
+    "amqplib": "0.x",
+    "graphql": "14.x || 15.x || 16.x"
+  }
+}
