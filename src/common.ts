@@ -2,8 +2,8 @@ import { AmqpConnectionManager, Options } from 'amqp-connection-manager';
 import { ConsumeMessage } from 'amqplib';
 
 export class Common {
-  public static convertMessage(msg: ConsumeMessage | null): any {
-    let res: any = null;
+  public static convertMessage(msg: ConsumeMessage): unknown {
+    let res: unknown = null;
 
     if (msg) {
       try {

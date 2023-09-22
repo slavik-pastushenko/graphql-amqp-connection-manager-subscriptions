@@ -18,13 +18,14 @@ export class AMQPConnectionManagerPubSub implements PubSubEngine {
 
   private subscriptionMap: { [subId: number]: { routingKey: string; listener: Function } };
   private subsRefsMap: { [trigger: string]: Array<number> };
-  private unsubscribeMap: { [trigger: string]: () => PromiseLike<any> };
+  private unsubscribeMap: { [trigger: string]: () => PromiseLike<unknown> };
   private currentSubscriptionId: number;
 
   constructor(public readonly config: PubSubAMQPConnectionManagerConfig) {
     this.subscriptionMap = {};
     this.subsRefsMap = {};
     this.unsubscribeMap = {};
+
     this.currentSubscriptionId = 0;
 
     // Initialize AMQP Connection Manager helper
@@ -34,14 +35,14 @@ export class AMQPConnectionManagerPubSub implements PubSubEngine {
     logger('Finished initializing');
   }
 
-  public async publish(routingKey: string, payload: any, options?: Options.Publish): Promise<void> {
+  public async publish(routingKey: string, payload: unknown, options?: Options.Publish): Promise<void> {
     return this.publisher.publish(routingKey, payload, options);
   }
 
   public async subscribe(
     routingKey: string | 'fanout',
-    onMessage: (content: any, message?: ConsumeMessage | null) => void,
-    args?: any,
+    onMessage: (content: unknown, message?: ConsumeMessage) => void,
+    args?: Options.Publish,
     options?: Options.Consume,
   ): Promise<number> {
     const id = this.currentSubscriptionId++;
@@ -111,7 +112,7 @@ export class AMQPConnectionManagerPubSub implements PubSubEngine {
     return new PubSubAsyncIterator<T>(this, triggers);
   }
 
-  private onMessage = (routingKey: string, content: any, message: ConsumeMessage | null): void => {
+  private onMessage = (routingKey: string, content: unknown, message: ConsumeMessage | null): void => {
     const subscribers = this.subsRefsMap[routingKey];
 
     // Don't work for nothing...
