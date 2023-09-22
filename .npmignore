@@ -36,5 +36,8 @@ node_modules
 # JSDoc
 jsdoc
 
+# IDE
+.vscode/*
+
 # MAC specific files
 .DS_Store

@@ -28,49 +28,51 @@ export class Subscriber {
     options?: Options.Consume,
   ): Promise<() => Promise<void>> {
     // Create and bind queue
-    const channel = await this.getOrCreateChannel(this.exchange);
-
-    const queue = await channel.assertQueue(this.queue.name || '', this.queue.options);
-    await channel.bindQueue(queue.queue, this.exchange.name, routingKey, args);
+    const queueName = this.queue?.name || '';
+    const channel = await this.getOrCreateChannel(this.exchange, this.queue, routingKey, args);
 
     // Listen for messages
     const opts = await channel.consume(
-      queue.queue,
+      queueName,
       msg => {
         let content = Common.convertMessage(msg);
 
-        this.logger('Message arrived from queue "%s" (%j)', queue.queue, content);
+        this.logger('Message arrived from queue "%s" (%j)', queueName, content);
 
         action(routingKey, content, msg);
       },
       { noAck: true, ...options },
     );
 
-    this.logger('Subscribed to queue "%s" (%s)', queue.queue, opts.consumerTag);
+    this.logger('Subscribed to queue "%s" (%s)', queueName, opts.consumerTag);
 
     // Dispose callback
     return async (): Promise<void> => {
-      this.logger('Disposing subscriber to queue "%s" (%s)', queue.queue, opts.consumerTag);
+      this.logger('Disposing subscriber to queue "%s" (%s)', queueName, opts.consumerTag);
 
-      const ch = await this.getOrCreateChannel(this.exchange);
+      const ch = await this.getOrCreateChannel(this.exchange, this.queue, routingKey, args);
 
       await ch.cancel(opts.consumerTag);
 
       if (this.queue.unbindOnDispose) {
-        await ch.unbindQueue(queue.queue, this.exchange.name, routingKey);
+        await ch.unbindQueue(queueName, this.exchange.name, routingKey);
       }
 
       if (this.queue.deleteOnDispose) {
-        await ch.deleteQueue(queue.queue);
+        await ch.deleteQueue(queueName);
       }
     };
   }
 
-  private async getOrCreateChannel(exchange: Exchange): Promise<ChannelWrapper> {
+  private async getOrCreateChannel(exchange: Exchange, queue: Queue, routingKey: string, args: any): Promise<ChannelWrapper> {
     if (!this.channel) {
       this.channel = await this.connection.createChannel({
         setup: async (channel: Channel) => {
           await channel.assertExchange(exchange.name, exchange.type, exchange.options);
+
+          const assertedQueue = await channel.assertQueue(queue?.name || '', queue?.options);
+
+          await channel.bindQueue(assertedQueue.queue, exchange.name, routingKey, args);
         },
       });
 
