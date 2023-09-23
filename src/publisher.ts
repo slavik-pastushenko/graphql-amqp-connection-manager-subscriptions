@@ -25,7 +25,7 @@ export class Publisher {
     this.logger('Message sent to exchange "%s" with routing key "%s" (%j)', this.exchange.name, routingKey, data);
   }
 
-  private async createChannel(exchange: Exchange): Promise<ChannelWrapper> {
+  public async createChannel(exchange: Exchange): Promise<ChannelWrapper> {
     const channel = await this.connection.createChannel({
       setup: async (channel: Channel) => {
         await channel.assertExchange(exchange.name, exchange.type, exchange.options);

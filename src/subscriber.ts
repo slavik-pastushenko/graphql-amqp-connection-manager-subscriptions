@@ -60,7 +60,7 @@ export class Subscriber {
     };
   }
 
-  private async createChannel(exchange: Exchange, queue: Queue, routingKey: string, args: unknown): Promise<ChannelWrapper> {
+  public async createChannel(exchange: Exchange, queue: Queue, routingKey: string, args: unknown): Promise<ChannelWrapper> {
     const channel = await this.connection.createChannel({
       setup: async (channel: Channel) => {
         await channel.assertExchange(exchange.name, exchange.type, exchange.options);

@@ -13,7 +13,6 @@ const logger = Debug('AMQPConnectionManagerPubSub');
 
 export class AMQPConnectionManagerPubSub implements PubSubEngine {
   private readonly publisher: Publisher;
-
   private readonly subscriber: Subscriber;
 
   private subscriptionMap: { [subId: number]: { routingKey: string; listener: Function } };
@@ -42,7 +41,7 @@ export class AMQPConnectionManagerPubSub implements PubSubEngine {
   public async subscribe(
     routingKey: string | 'fanout',
     onMessage: (content: unknown, message?: ConsumeMessage) => void,
-    args?: Options.Publish,
+    args?: Options.AssertQueue,
     options?: Options.Consume,
   ): Promise<number> {
     const id = this.currentSubscriptionId++;

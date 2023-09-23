@@ -10,31 +10,36 @@ This package is influenced by [graphql-amqp-subscriptions](https://github.com/Su
 
 ## Basic usage
 
-```javascript
+```typescript
 import { AMQPConnectionManagerPubSub } from 'graphql-amqp-connection-manager-subscriptions';
 import { connect } from 'amqp-connection-manager';
 
 const connection = connect('amqp://guest:guest@localhost:5672?heartbeat=20');
 const pubsub = new AMQPConnectionManagerPubSub({
-  connection: conn
-  /* exchange: {
-      name: 'exchange',
-      type: 'topic',
-      options: {
-        durable: false,
-        autoDelete: true
-      }
+  // Required
+  connection,
+
+  // Optional
+  exchange: {
+    name: 'exchange',
+    type: 'topic',
+    options: {
+      durable: false,
+      autoDelete: true,
     },
-    queue: {
-      name: 'queue'
-      options: {
-        exclusive: true,
-        durable: true,
-        autoDelete: true
-      },
-      unbindOnDispose: false;
-      deleteOnDispose: false;
-    } */
+  },
+
+  // Optional
+  queue: {
+    name: 'queue'
+    options: {
+      exclusive: true,
+      durable: true,
+      autoDelete: true,
+    },
+    unbindOnDispose: false,
+    deleteOnDispose: false,
+  },
 });
 ```
 

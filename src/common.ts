@@ -2,18 +2,16 @@ import { AmqpConnectionManager, Options } from 'amqp-connection-manager';
 import { ConsumeMessage } from 'amqplib';
 
 export class Common {
-  public static convertMessage(msg: ConsumeMessage): unknown {
-    let res: unknown = null;
-
-    if (msg) {
-      try {
-        res = JSON.parse(msg.content.toString());
-      } catch (e) {
-        res = msg.content.toString();
-      }
+  public static convertMessage(message?: ConsumeMessage): any {
+    if (!message) {
+      return null;
     }
 
-    return res;
+    try {
+      return JSON.parse(message.content.toString());
+    } catch {
+      return message.content?.toString();
+    }
   }
 }
 
