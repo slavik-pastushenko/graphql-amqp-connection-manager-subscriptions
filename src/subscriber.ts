@@ -62,12 +62,12 @@ export class Subscriber {
 
   public async createChannel(exchange: Exchange, queue: Queue, routingKey: string, args: unknown): Promise<ChannelWrapper> {
     const channel = await this.connection.createChannel({
-      setup: async (channel: Channel) => {
-        await channel.assertExchange(exchange.name, exchange.type, exchange.options);
+      setup: async (ch: Channel) => {
+        await ch.assertExchange(exchange.name, exchange.type, exchange.options);
 
-        const assertedQueue = await channel.assertQueue(queue?.name || '', queue?.options);
+        const assertedQueue = await ch.assertQueue(queue?.name || '', queue?.options);
 
-        await channel.bindQueue(assertedQueue.queue, exchange.name, routingKey, args);
+        await ch.bindQueue(assertedQueue.queue, exchange.name, routingKey, args);
       },
     });
 

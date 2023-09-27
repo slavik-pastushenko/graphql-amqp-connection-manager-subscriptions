@@ -18,6 +18,7 @@ describe('Publisher', () => {
       assertExchange: jest.fn(),
       setup: jest.fn(),
       on: jest.fn(),
+      close: jest.fn(),
     } as unknown as ChannelWrapper;
     mockConnection.createChannel = jest.fn().mockResolvedValue(mockChannel);
     mockLogger = jest.fn() as unknown as jest.Mocked<IDebugger>;
@@ -37,8 +38,9 @@ describe('Publisher', () => {
       await publisher.publish(routingKey, data);
 
       expect(mockConnection.createChannel).toHaveBeenCalledTimes(1);
+      expect(mockChannel.close).toHaveBeenCalledTimes(1);
       expect(mockChannel.publish).toHaveBeenCalledWith('test_exchange', routingKey, Buffer.from(JSON.stringify(data)), undefined);
-      expect(mockLogger).toHaveBeenCalledTimes(2);
+      expect(mockLogger).toHaveBeenCalledTimes(3);
     });
   });
 

@@ -23,12 +23,16 @@ export class Publisher {
     await channel.publish(this.exchange.name, routingKey, Buffer.from(JSON.stringify(data)), options);
 
     this.logger('Message sent to exchange "%s" with routing key "%s" (%j)', this.exchange.name, routingKey, data);
+
+    await channel?.close();
+
+    this.logger('Channel was closed for exchange "%s"', this.exchange.name);
   }
 
   public async createChannel(exchange: Exchange): Promise<ChannelWrapper> {
     const channel = await this.connection.createChannel({
-      setup: async (channel: Channel) => {
-        await channel.assertExchange(exchange.name, exchange.type, exchange.options);
+      setup: async (ch: Channel) => {
+        await ch.assertExchange(exchange.name, exchange.type, exchange.options);
       },
     });
 
