@@ -18,7 +18,6 @@ describe('Publisher', () => {
       assertExchange: jest.fn(),
       setup: jest.fn(),
       on: jest.fn(),
-      close: jest.fn(),
     } as unknown as ChannelWrapper;
     mockConnection.createChannel = jest.fn().mockResolvedValue(mockChannel);
     mockLogger = jest.fn() as unknown as jest.Mocked<IDebugger>;
@@ -38,7 +37,6 @@ describe('Publisher', () => {
       await publisher.publish(routingKey, data);
 
       expect(mockConnection.createChannel).toHaveBeenCalledTimes(1);
-      expect(mockChannel.close).toHaveBeenCalledTimes(1);
       expect(mockChannel.publish).toHaveBeenCalledWith('test_exchange', routingKey, Buffer.from(JSON.stringify(data)), undefined);
       expect(mockLogger).toHaveBeenCalledTimes(3);
     });
@@ -48,6 +46,19 @@ describe('Publisher', () => {
     it('should create a channel', async () => {
       const exchange = { name: 'Test', type: 'topic' };
 
+      await publisher.createChannel(exchange);
+
+      expect(mockConnection.createChannel).toHaveBeenCalledTimes(1);
+      expect(mockConnection.createChannel).toHaveBeenCalledWith({ setup: expect.any(Function) });
+    });
+
+    it('should not create a channel if there is an existing one', async () => {
+      const exchange = { name: 'Test', type: 'topic' };
+
+      // First call
+      await publisher.createChannel(exchange);
+
+      // Second call
       await publisher.createChannel(exchange);
 
       expect(mockConnection.createChannel).toHaveBeenCalledTimes(1);

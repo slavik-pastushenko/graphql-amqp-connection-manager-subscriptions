@@ -8,6 +8,7 @@ export class Subscriber {
   private readonly connection: AmqpConnectionManager;
   private readonly exchange: Exchange;
   private readonly queue: Queue;
+  private channel: ChannelWrapper | null = null;
 
   constructor(
     public readonly config: PubSubAMQPConnectionManagerConfig,
@@ -28,26 +29,31 @@ export class Subscriber {
     const queueName = this.queue?.name || '';
     const channel = await this.createChannel(this.exchange, this.queue, routingKey, args);
 
+    if (!channel.queueLength()) {
+      await this.createQueue(channel, queueName, routingKey, args);
+    }
+
     // Listen for messages
     const opts = await channel.consume(
       queueName,
       msg => {
         let content = Common.convertMessage(msg);
 
-        this.logger('Message arrived from queue "%s" (%j)', queueName, content);
+        this.logger('[Subscriber] Message arrived from queue "%s" (%j)', queueName, content);
 
         action(routingKey, content, msg);
       },
       { noAck: true, ...options },
     );
 
-    this.logger('Subscribed to queue "%s" (%s)', queueName, opts.consumerTag);
+    this.logger('[Subscriber] Subscribed to queue "%s" (%s)', queueName, opts.consumerTag);
 
     // Dispose callback
     return async (): Promise<void> => {
-      this.logger('Disposing subscriber to queue "%s" (%s)', queueName, opts.consumerTag);
+      this.logger('[Subscriber] Disposing subscriber to queue "%s" (%s)', queueName, opts.consumerTag);
 
       const channel = await this.createChannel(this.exchange, this.queue, routingKey, args);
+
       await channel.cancel(opts.consumerTag);
 
       if (this.queue.unbindOnDispose) {
@@ -61,18 +67,32 @@ export class Subscriber {
   }
 
   public async createChannel(exchange: Exchange, queue: Queue, routingKey: string, args: unknown): Promise<ChannelWrapper> {
-    const channel = await this.connection.createChannel({
+    if (this.channel) {
+      return this.channel;
+    }
+
+    this.channel = await this.connection.createChannel({
       setup: async (ch: Channel) => {
+        this.logger('[Subscriber] Creating a new channel for exchange "%s"', exchange.name);
+
         await ch.assertExchange(exchange.name, exchange.type, exchange.options);
 
-        const assertedQueue = await ch.assertQueue(queue?.name || '', queue?.options);
+        const assertedQueue = await ch.assertQueue(queue.name || '', queue?.options);
 
         await ch.bindQueue(assertedQueue.queue, exchange.name, routingKey, args);
       },
     });
 
-    channel.on('error', err => this.logger('Subscriber channel error: "%j"', err));
+    this.channel.on('error', err => this.logger('[Subscriber] Channel error: "%j"', err));
 
-    return channel;
+    return this.channel;
+  }
+
+  public async createQueue(channel: ChannelWrapper, queueName: string, routingKey: string, args: any): Promise<void> {
+    const assertedQueue = await channel.assertQueue(queueName || '', this.queue?.options);
+    this.logger('[Subscriber] Asserted a queue "%s" for exchange (%s)', queueName, this.exchange.name);
+
+    await channel.bindQueue(assertedQueue.queue, this.exchange.name, routingKey, args);
+    this.logger('[Subscriber] Binded a queue "%s" for exchange (%s)', assertedQueue.queue, this.exchange.name);
   }
 }

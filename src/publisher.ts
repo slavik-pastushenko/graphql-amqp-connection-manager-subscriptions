@@ -6,6 +6,7 @@ import { Exchange, PubSubAMQPConnectionManagerConfig } from './common';
 export class Publisher {
   private readonly connection: AmqpConnectionManager;
   private readonly exchange: Exchange;
+  private channel: ChannelWrapper | null = null;
 
   constructor(
     public readonly config: PubSubAMQPConnectionManagerConfig,
@@ -18,26 +19,28 @@ export class Publisher {
   public async publish(routingKey: string, data: unknown, options?: Options.Publish): Promise<void> {
     const channel = await this.createChannel(this.exchange);
 
-    this.logger('Publishing message to exchange "%s" with routing key "%s" (%j)', this.exchange.name, routingKey, data);
+    this.logger('[Publisher] Publishing a message to exchange "%s" with routing key "%s" (%j)', this.exchange.name, routingKey, data);
 
     await channel.publish(this.exchange.name, routingKey, Buffer.from(JSON.stringify(data)), options);
 
-    this.logger('Message sent to exchange "%s" with routing key "%s" (%j)', this.exchange.name, routingKey, data);
-
-    await channel?.close();
-
-    this.logger('Channel was closed for exchange "%s"', this.exchange.name);
+    this.logger('[Publisher] Message sent to exchange "%s" with routing key "%s" (%j)', this.exchange.name, routingKey, data);
   }
 
   public async createChannel(exchange: Exchange): Promise<ChannelWrapper> {
-    const channel = await this.connection.createChannel({
+    if (this.channel) {
+      return this.channel;
+    }
+
+    this.logger('[Publisher] Creating a new channel for exchange "%s"', exchange.name);
+
+    this.channel = await this.connection.createChannel({
       setup: async (ch: Channel) => {
         await ch.assertExchange(exchange.name, exchange.type, exchange.options);
       },
     });
 
-    channel.on('error', err => this.logger('Publisher channel error: "%j"', err));
+    this.channel.on('error', err => this.logger('[Publisher] Publisher channel error: "%j"', err));
 
-    return channel;
+    return this.channel;
   }
 }
