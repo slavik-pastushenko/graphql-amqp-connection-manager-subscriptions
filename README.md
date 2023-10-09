@@ -37,8 +37,6 @@ const pubsub = new AMQPConnectionManagerPubSub({
       durable: true,
       autoDelete: true,
     },
-    unbindOnDispose: false,
-    deleteOnDispose: false,
   },
 });
 ```

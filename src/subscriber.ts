@@ -15,7 +15,7 @@ export class Subscriber {
     private readonly logger: IDebugger,
   ) {
     this.connection = config.connection;
-    this.queue = { options: { exclusive: true, durable: false, autoDelete: true }, ...config.queue };
+    this.queue = { name: config?.queue?.name || '', options: { exclusive: true, durable: false, autoDelete: true }, ...config.queue };
     this.exchange = { name: 'graphql_subscriptions', type: 'topic', options: { durable: false, autoDelete: false }, ...config.exchange };
   }
 
@@ -26,43 +26,40 @@ export class Subscriber {
     options?: Options.Consume,
   ): Promise<() => Promise<void>> {
     // Create and bind queue
-    const queueName = this.queue?.name || '';
     const channel = await this.createChannel(this.exchange, this.queue, routingKey, args);
 
     if (!channel.queueLength()) {
-      await this.createQueue(channel, queueName, routingKey, args);
+      await this.createQueue(channel, this.queue.name, routingKey, args);
     }
 
     // Listen for messages
     const opts = await channel.consume(
-      queueName,
+      this.queue.name,
       msg => {
         let content = Common.convertMessage(msg);
 
-        this.logger('[Subscriber] Message arrived from queue "%s" (%j)', queueName, content);
+        this.logger('[Subscriber] Message arrived from queue "%s" (%j)', this.queue.name, content);
 
         action(routingKey, content, msg);
       },
       { noAck: true, ...options },
     );
 
-    this.logger('[Subscriber] Subscribed to queue "%s" (%s)', queueName, opts.consumerTag);
+    this.logger('[Subscriber] Subscribed to queue "%s" (%s)', this.queue.name, opts.consumerTag);
 
     // Dispose callback
     return async (): Promise<void> => {
-      this.logger('[Subscriber] Disposing subscriber to queue "%s" (%s)', queueName, opts.consumerTag);
+      this.logger('[Subscriber] Disposing subscriber to queue "%s" (%s)', this.queue.name, opts.consumerTag);
 
       const channel = await this.createChannel(this.exchange, this.queue, routingKey, args);
 
       await channel.cancel(opts.consumerTag);
 
-      if (this.queue.unbindOnDispose) {
-        await channel.unbindQueue(queueName, this.exchange.name, routingKey);
-      }
+      await channel.unbindQueue(this.queue.name, this.exchange.name, routingKey);
+      this.logger('[Subscriber] Unbound queue "%s" (%s)', this.queue.name, routingKey);
 
-      if (this.queue.deleteOnDispose) {
-        await channel.deleteQueue(queueName);
-      }
+      await channel.deleteQueue(this.queue.name);
+      this.logger('[Subscriber] Deleted queue "%s" (%s)', this.queue.name, routingKey);
     };
   }
 
@@ -77,7 +74,7 @@ export class Subscriber {
 
         await ch.assertExchange(exchange.name, exchange.type, exchange.options);
 
-        const assertedQueue = await ch.assertQueue(queue.name || '', queue?.options);
+        const assertedQueue = await ch.assertQueue(queue.name, queue?.options);
 
         await ch.bindQueue(assertedQueue.queue, exchange.name, routingKey, args);
       },
@@ -89,7 +86,7 @@ export class Subscriber {
   }
 
   public async createQueue(channel: ChannelWrapper, queueName: string, routingKey: string, args: any): Promise<void> {
-    const assertedQueue = await channel.assertQueue(queueName || '', this.queue?.options);
+    const assertedQueue = await channel.assertQueue(queueName, this.queue?.options);
     this.logger('[Subscriber] Asserted a queue "%s" for exchange (%s)', queueName, this.exchange.name);
 
     await channel.bindQueue(assertedQueue.queue, this.exchange.name, routingKey, args);

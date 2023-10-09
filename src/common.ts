@@ -42,22 +42,12 @@ export interface Queue {
   /**
    * @description Queue name
    */
-  name?: string;
+  name: string;
 
   /**
    * @description Queue options
    */
   options?: Options.AssertQueue;
-
-  /**
-   * @description Indicates whether to unbind on dispose or not
-   */
-  unbindOnDispose?: boolean;
-
-  /**
-   * @description Indicates whether to delete on dispose or not
-   */
-  deleteOnDispose?: boolean;
 }
 
 /**
